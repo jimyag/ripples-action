@@ -1,0 +1,78 @@
+name: Ripples fork PR comment
+
+on:
+  workflow_call:
+    inputs:
+      repo-path:
+        description: Path to the Go module in the caller repository
+        type: string
+        default: .
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      found: ${{ steps.pr.outputs.found }}
+      number: ${{ steps.pr.outputs.number }}
+      head-sha: ${{ steps.pr.outputs.head-sha }}
+      mains: ${{ steps.impact.outputs.mains }}
+    steps:
+      - id: pr
+        uses: jimyag/ripples-action/resolve@main
+      - if: steps.pr.outputs.found == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - if: steps.pr.outputs.found == 'true'
+        name: Fetch PR head
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head-sha }}
+        run: |
+          git -C source fetch --no-tags origin "refs/pull/$PR_NUMBER/head"
+          git -C source checkout --detach "$HEAD_SHA"
+      - if: steps.pr.outputs.found == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: source/${{ inputs.repo-path }}/go.mod
+          cache: false
+      - if: steps.pr.outputs.found == 'true'
+        id: impact
+        uses: jimyag/ripples-action@main
+        with:
+          repo-path: source/${{ inputs.repo-path }}
+          base-sha: ${{ steps.pr.outputs.base-sha }}
+          head-sha: ${{ steps.pr.outputs.head-sha }}
+
+  comment:
+    needs: analyze
+    if: needs.analyze.outputs.found == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check current PR head
+        id: current
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.analyze.outputs.number }}
+          HEAD_SHA: ${{ needs.analyze.outputs.head-sha }}
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')
+          if [[ $current == "$HEAD_SHA" ]]; then
+            echo 'matches=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'PR changed after analysis; skipping stale comment.'
+          fi
+      - if: steps.current.outputs.matches == 'true'
+        uses: jimyag/ripples-action/comment@main
+        with:
+          pr-number: ${{ needs.analyze.outputs.number }}
+          mains: ${{ needs.analyze.outputs.mains }}
+          github-token: ${{ github.token }}

@@ -1,0 +1,27 @@
+name: Resolve PR for workflow run
+description: Find the open PR matching a completed pull request workflow run
+
+outputs:
+  found:
+    description: Whether a matching open PR exists
+    value: ${{ steps.pr.outputs.found }}
+  number:
+    description: Matching pull request number
+    value: ${{ steps.pr.outputs.number }}
+  base-sha:
+    description: Current base commit
+    value: ${{ steps.pr.outputs.base-sha }}
+  head-sha:
+    description: Current head commit
+    value: ${{ steps.pr.outputs.head-sha }}
+
+runs:
+  using: composite
+  steps:
+    - id: pr
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        RUN_HEAD_REPO_ID: ${{ github.event.workflow_run.head_repository.id }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/resolve.sh"

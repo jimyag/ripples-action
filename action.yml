@@ -15,7 +15,7 @@ inputs:
     description: Ripples release tag
     default: v0.3.0
   comment:
-    description: Create or update a pull request comment with affected main packages
+    description: Direct comment for same-repository PRs; use the reusable workflow for fork PRs
     default: 'false'
   github-token:
     description: Token with pull-requests write permission when comment is true

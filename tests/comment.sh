@@ -40,3 +40,13 @@ grep -Fq -- '--method POST repos/example/project/issues/42/comments' "$GH_CALLS"
 : > "$GH_CALLS"
 EXISTING_COMMENT_ID=123 bash "$(dirname "$0")/../scripts/comment.sh"
 grep -Fq -- '--method PATCH repos/example/project/issues/comments/123' "$GH_CALLS"
+
+: > "$GH_CALLS"
+PR_NUMBER=17 bash "$(dirname "$0")/../scripts/comment.sh"
+grep -Fq -- '--method POST repos/example/project/issues/17/comments' "$GH_CALLS"
+
+if PR_NUMBER=17 MAINS_JSON='{"unexpected":"object"}' \
+  bash "$(dirname "$0")/../scripts/comment.sh" > /dev/null 2>&1; then
+  echo 'invalid mains JSON was accepted' >&2
+  exit 1
+fi

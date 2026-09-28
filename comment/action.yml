@@ -1,0 +1,23 @@
+name: Ripples PR comment
+description: Update the affected main packages comment without checking out PR code
+
+inputs:
+  pr-number:
+    description: Pull request number
+    required: true
+  mains:
+    description: JSON array of affected main packages
+    required: true
+  github-token:
+    description: Token with pull-requests write permission
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        MAINS_JSON: ${{ inputs.mains }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/comment.sh"

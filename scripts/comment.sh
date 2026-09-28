@@ -3,12 +3,20 @@ set -euo pipefail
 
 : "${GH_TOKEN:?github-token is required when comment is true}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
-: "${GITHUB_EVENT_PATH:?GITHUB_EVENT_PATH is required}"
 : "${MAINS_JSON:?MAINS_JSON is required}"
 
-pr_number=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")
-if [[ -z $pr_number ]]; then
-  echo 'comment requires a pull request event' >&2
+if [[ -n ${PR_NUMBER:-} ]]; then
+  pr_number=$PR_NUMBER
+else
+  : "${GITHUB_EVENT_PATH:?GITHUB_EVENT_PATH is required}"
+  pr_number=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")
+fi
+if [[ ! $pr_number =~ ^[1-9][0-9]*$ ]]; then
+  echo 'comment requires a pull request number' >&2
+  exit 1
+fi
+if ! jq -e 'type == "array" and length <= 1000 and all(.[]; type == "string" and length <= 300)' <<< "$MAINS_JSON" > /dev/null; then
+  echo 'mains must be a JSON array of package names' >&2
   exit 1
 fi
 
@@ -20,7 +28,7 @@ body_file="$workdir/body.md"
   if [[ $MAINS_JSON == '[]' ]]; then
     printf 'None.\n'
   else
-    jq -r '.[] | "- `\(.)`"' <<< "$MAINS_JSON"
+    jq -r '.[] | "- <code>\(. | @html)</code>"' <<< "$MAINS_JSON"
   fi
 } > "$body_file"
 jq -n --rawfile body "$body_file" '{body: $body}' > "$workdir/payload.json"
