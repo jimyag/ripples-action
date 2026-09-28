@@ -1,0 +1,51 @@
+name: Ripples impact
+description: Find affected Go packages and main entry points in a pull request
+
+inputs:
+  base-sha:
+    description: Base commit to compare
+    required: true
+  head-sha:
+    description: Head commit to compare
+    required: true
+  repo-path:
+    description: Path to the Go module in the checked-out repository
+    default: .
+  ripples-version:
+    description: Ripples release tag
+    default: v0.3.0
+  comment:
+    description: Create or update a pull request comment with affected main packages
+    default: 'false'
+  github-token:
+    description: Token with pull-requests write permission when comment is true
+    default: ''
+
+outputs:
+  packages:
+    description: JSON array of affected, non-deleted packages in path.name form
+    value: ${{ steps.analyze.outputs.packages }}
+  mains:
+    description: JSON array of affected, non-deleted main packages
+    value: ${{ steps.analyze.outputs.mains }}
+  has-changes:
+    description: Whether any non-deleted package is affected
+    value: ${{ steps.analyze.outputs.has-changes }}
+
+runs:
+  using: composite
+  steps:
+    - id: analyze
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        REPO_PATH: ${{ inputs.repo-path }}
+        RIPPLES_VERSION: ${{ inputs.ripples-version }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/analyze.sh"
+    - if: ${{ inputs.comment == 'true' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        MAINS_JSON: ${{ steps.analyze.outputs.mains }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/comment.sh"
