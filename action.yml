@@ -1,5 +1,9 @@
 name: Ripples impact
 description: Find affected Go packages and main entry points in a pull request
+author: jimyag
+branding:
+  icon: git-pull-request
+  color: blue
 
 inputs:
   base-sha:
@@ -13,7 +17,7 @@ inputs:
     default: .
   ripples-version:
     description: Ripples release tag
-    default: v0.3.0
+    default: v0.3.1
   comment:
     description: Direct comment for same-repository PRs; use the reusable workflow for fork PRs
     default: 'false'

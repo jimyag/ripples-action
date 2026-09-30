@@ -11,7 +11,7 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "unsupported runner architecture: $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 
-version=${RIPPLES_VERSION:-v0.3.0}
+version=${RIPPLES_VERSION:-v0.3.1}
 if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "invalid ripples-version: $version" >&2
   exit 1

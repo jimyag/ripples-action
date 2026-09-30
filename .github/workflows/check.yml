@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: |
+          bash tests/analyze.sh
           bash tests/outputs.sh
           bash tests/resolve.sh
           bash tests/comment.sh
