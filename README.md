@@ -71,7 +71,7 @@ The reusable workflow finds the open PR matching the completed run's head reposi
 
 If you only need comments, `Impact` can be an existing successful PR workflow; the reusable workflow performs the analysis itself. GitHub may require a maintainer to approve a first-time contributor's fork workflow before the comment workflow can run.
 
-`workflow_run` must be enabled by the repository's Actions policy. The comment workflow must exist on the default branch. For a Go module below the repository root, pass `with: {repo-path: path/to/module}` to the reusable workflow. The analysis job currently fetches PR code without credentials, so this setup targets public repositories. The two jobs use separate GitHub-hosted runners; do not run the analysis job on a shared runner that exposes secrets or internal resources.
+`workflow_run` must be enabled by the repository's Actions policy. The comment workflow must exist on the default branch. For a Go module below the repository root, pass `with: {repo-path: path/to/module}` to the reusable workflow. Public and private repositories are supported: the fetch command uses the job's read-only token through a temporary credential helper, without storing it in the repository. The two jobs use separate GitHub-hosted runners; do not run the analysis job on a shared runner that exposes secrets or internal resources.
 
 For same-repository PRs only, the analysis Action still offers `comment: 'true'` with `github-token` and `pull-requests: write`. Use the separate workflow above when fork PR comments are required. Do not run untrusted PR code with a write token via `pull_request_target`.
 

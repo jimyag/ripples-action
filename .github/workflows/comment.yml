@@ -33,8 +33,9 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           HEAD_SHA: ${{ steps.pr.outputs.head-sha }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git -C source fetch --no-tags origin "refs/pull/$PR_NUMBER/head"
+          git -C source -c credential.helper= -c 'credential.helper=!gh auth git-credential' fetch --no-tags origin "refs/pull/$PR_NUMBER/head"
           git -C source checkout --detach "$HEAD_SHA"
       - if: steps.pr.outputs.found == 'true'
         uses: actions/setup-go@v7
